@@ -16,7 +16,7 @@ let MAX_GOOGLE_LEVELS : Double = 20
 class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
 
     @IBOutlet var mapView: MKMapView!
-    @IBOutlet weak var googleMapView: GMSMapView!
+    @IBOutlet var googleMapView: GMSMapView!
     @IBOutlet weak var button: UIButton!
     
     @IBAction func zoomIn(sender: AnyObject) {
@@ -80,9 +80,6 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
     
     func mapView(mapView: MKMapView!, regionWillChangeAnimated animated: Bool) {
         mapRegion = self.mapView.region
-        googleMapsCurrentZoom = 8.5
-        //NSLog("lat = %f, long = %f", mapRegion.span.latitudeDelta, mapRegion.span.longitudeDelta)
-        //NSLog("lat = %f long = %f", , mapView.userLocation.coordinate.longitude)
         
     }
     
@@ -118,13 +115,15 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
         return zoomer
     }
     
-    func googleMapView(googleMapView: GMSMapView!, willMove gesture: Bool) {
-        googleMapView.camera = GMSCameraPosition.cameraWithLatitude(googleMapView.myLocation.coordinate.latitude, longitude: googleMapView.myLocation.coordinate.longitude, zoom: 8.5)
-    }
-    
     func googleMapView(googleMapView: GMSMapView!, didChangeCameraPosition position: GMSCameraPosition!) {
-        self.mapView.bounds.size = self.googleMapView.bounds.size
+        NSLog("dssdd")
+        
         NSLog("%f,%f",googleMapView.projection.visibleRegion().farLeft.latitude, googleMapView.projection.visibleRegion().farLeft.longitude);//north west
+        
+        var previousRegion : MKCoordinateRegion = mapView.region
+        
+        var newRegion : MKCoordinateRegion = MKCoordinateRegionMake(CLLocationCoordinate2DMake(position.target.latitude, position.target.longitude), MKCoordinateSpanMake(0.005, 0.005))
+        mapView.setRegion(newRegion, animated: true)
         
         /*var visibleRegion : GMSVisibleRegion
         visibleRegion = googleMapView.projection.visibleRegion()
@@ -140,8 +139,8 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
         */
     }
     
-    func googleMapView(googleMapView: GMSMapView!, idleAtCameraPosition position: GMSCameraPosition!) {
-        button.setTitle("It works!", forState: UIControlState.Normal)
+    func googleMapView(googleMapView: GMSMapView!, didTapAtCoordinate coordinate: CLLocationCoordinate2D) {
+        println("You tapped at \(coordinate.latitude), \(coordinate.longitude)")
     }
     
     @IBAction func mapTypeSegmentPressed(sender: AnyObject) {

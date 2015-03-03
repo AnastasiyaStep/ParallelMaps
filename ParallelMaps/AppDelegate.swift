@@ -21,7 +21,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         GMSServices.provideAPIKey(googleMapsApiKey)
         locationManager = CLLocationManager()
-        locationManager?.requestWhenInUseAuthorization()
+        
+        if (locationManager!.respondsToSelector(Selector("requestWhenInUseAutorization"))) {
+            locationManager!.requestWhenInUseAuthorization()
+        }
         return true
     }
 
