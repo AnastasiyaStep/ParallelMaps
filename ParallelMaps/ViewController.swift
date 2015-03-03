@@ -11,6 +11,7 @@ import MapKit
 
 let MERCATOR_OFFSET: Double = 268435456
 let MERCATOR_RADIUS: Double = 85445659.44705395
+let MAX_GOOGLE_LEVELS : Double = 20
 
 class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
 
@@ -80,7 +81,6 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
     
     func mapView(mapView: MKMapView!, regionWillChangeAnimated animated: Bool) {
         mapRegion = self.mapView.region
-        //googleMapsCurrentZoom = self.googleMapView.camera.zoom
         googleMapsCurrentZoom = 8.5
         //NSLog("lat = %f, long = %f", mapRegion.span.latitudeDelta, mapRegion.span.longitudeDelta)
         //NSLog("lat = %f long = %f", , mapView.userLocation.coordinate.longitude)
@@ -96,7 +96,7 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
         var moveAmountLatitude = mapRegion.span.latitudeDelta - newRegion.span.latitudeDelta
         var moveAmountLongitude = mapRegion.span.longitudeDelta - newRegion.span.longitudeDelta
         
-        NSLog("move latitude %f", moveAmountLatitude)
+        //NSLog("move latitude %f", moveAmountLatitude)
         //NSLog("move longitude %f", moveAmountLongitude)
         //NSLog("zoom %f", zoomLevel)
         //NSLog("google map zoom %f", googleMapView.camera.zoom)
@@ -104,72 +104,24 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
         var centerPixelX : Double = mapView.centerCoordinate.longitude
         var centerPixelY : Double = mapView.centerCoordinate.latitude
         
-        //var zoomLevel1 = 21 - round(log2(mapView.region.span.longitudeDelta * MERCATOR_RADIUS * M_PI / (180.0 * mapView.bounds.size.width)))
-       // var zoomExponent : NSInteger = 20 - zoomLevel1
+        var zoomNew = Float(getZoomLevel())
         
         var zFactor : NSInteger
-        if ((mapRegion.span.latitudeDelta/newRegion.span.latitudeDelta) > 1.0) {
-            //button.setTitle("MapView Zoom in", forState: UIControlState.Normal)
-            googleMapView.camera = GMSCameraPosition.cameraWithLatitude(mapView.region.center.latitude, longitude: mapView.region.center.longitude, zoom: (googleMapsCurrentZoom * Float(zoomLevel)))
+        //if ((mapRegion.span.latitudeDelta/newRegion.span.latitudeDelta) > 1.0) {
+            googleMapView.camera = GMSCameraPosition.cameraWithLatitude(mapView.region.center.latitude, longitude: mapView.region.center.longitude, zoom: zoomNew)
+    }
+    
+    func getZoomLevel() -> Double {
+        var longitudeDelta : CLLocationDegrees
+        longitudeDelta = mapView.region.span.longitudeDelta
+        var mapWidthInPixels : CGFloat
+        mapWidthInPixels = mapView.bounds.size.width
+        var zoomScale : Double = longitudeDelta * MERCATOR_RADIUS * M_PI / (180.0 * Double(mapWidthInPixels))
+        var zoomer : Double = MAX_GOOGLE_LEVELS - log2(zoomScale)
+        if (zoomer < 0) {
+            zoomer = 0
         }
-        if ((mapRegion.span.latitudeDelta/newRegion.span.latitudeDelta) < 1.0) {
-            //button.setTitle("MapView Zoom out", forState: UIControlState.Normal)
-            googleMapView.camera = GMSCameraPosition.cameraWithLatitude(mapView.region.center.latitude, longitude: mapView.region.center.longitude, zoom: (googleMapsCurrentZoom * Float(zoomLevel)))
-        }
-        if (zoomLevel == 1.0) {
-            googleMapView.camera = GMSCameraPosition.cameraWithLatitude(mapView.region.center.latitude, longitude: mapView.region.center.longitude, zoom: googleMapsCurrentZoom * Float(zoomLevel))
-        }
-    }
-    
-    func longitudeToPixelSpaceX(longitude: Double) -> Double {
-        return round(MERCATOR_OFFSET + MERCATOR_RADIUS * longitude * M_PI / 180.0)
-    }
-    
-    func latitudeToPixelSpaceY(latitude: Double) -> Double {
-        return round(MERCATOR_OFFSET - MERCATOR_RADIUS * log((1.0 + sin(latitude * M_PI / 180.0)) / (1.0 - sin(latitude * M_PI / 180.0))) / 2.0)
-    }
-    
-    func pixelSpaceXToLongitude(pixelX: Double) -> Double {
-        return ((round(pixelX) - MERCATOR_OFFSET) / MERCATOR_RADIUS) * 180.0 / M_PI
-    }
-    
-    func pixelSpaceYToLatitude(pixelY: Double) -> Double {
-        return (M_PI / 2.0 - 2.0 * atan(exp((round(pixelY) - MERCATOR_OFFSET) / MERCATOR_RADIUS))) * 180.0 / M_PI
-    }
-    
-    func coordinateSpan(mapView: MKMapView!, centerCoordinate: CLLocationCoordinate2D, zoomLevel: Int) -> MKCoordinateSpan {
-        
-        let centerPixelX = longitudeToPixelSpaceX(centerCoordinate.longitude)
-        let centerPixelY = latitudeToPixelSpaceY(centerCoordinate.latitude)
-        
-        let zoomExponent = 20 - zoomLevel
-        let zoomScale = pow(2.0, Double(zoomExponent))
-        
-        let mapSizeInPixels = mapView.bounds.size
-        let scaledMapWidth = Double(mapSizeInPixels.width) * zoomScale
-        let scaledMapHeight = Double(mapSizeInPixels.height) * zoomScale
-        
-        let topLeftPixelX = centerPixelX - (scaledMapWidth / 2)
-        let topLeftPixelY = centerPixelY - (scaledMapHeight / 2)
-        
-        let minLng = pixelSpaceXToLongitude(topLeftPixelX) as CLLocationDegrees
-        let maxLng = pixelSpaceXToLongitude(topLeftPixelX + scaledMapWidth)
-        let longitudeDelta = maxLng - minLng
-        
-        let minLat = pixelSpaceXToLongitude(topLeftPixelY)
-        let maxLat = pixelSpaceXToLongitude(topLeftPixelY + scaledMapHeight)
-        let latitudeDelta = maxLat - minLat
-        
-        return MKCoordinateSpanMake(latitudeDelta, longitudeDelta)
-    }
-    
-    func setCenterCoordinate(centerCoordinate: CLLocationCoordinate2D, zoomLevel:Int, animated: Bool) {
-        let aZoomLevel = min(zoomLevel, 28)
-        
-        let span = coordinateSpan(mapView, centerCoordinate: centerCoordinate, zoomLevel: aZoomLevel)
-        let region = MKCoordinateRegionMake(centerCoordinate, span)
-        
-        mapView.setRegion(region, animated: animated)
+        return zoomer
     }
     
     func googleMapView(googleMapView: GMSMapView!, willMove gesture: Bool) {
