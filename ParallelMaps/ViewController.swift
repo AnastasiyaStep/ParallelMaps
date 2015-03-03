@@ -52,7 +52,6 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
         super.viewDidLoad()
         
         googleMapView.myLocationEnabled = true
-        //googleMapView.settings.myLocationButton = true
         googleMapView.settings.compassButton = true
         googleMapView.settings.indoorPicker = true
         
@@ -66,7 +65,7 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
         
         mapView.delegate = self
         
-        googleMapView.delegate = self
+        self.googleMapView.delegate = self
     }
 
     override func didReceiveMemoryWarning() {
@@ -95,11 +94,6 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
         
         var moveAmountLatitude = mapRegion.span.latitudeDelta - newRegion.span.latitudeDelta
         var moveAmountLongitude = mapRegion.span.longitudeDelta - newRegion.span.longitudeDelta
-        
-        //NSLog("move latitude %f", moveAmountLatitude)
-        //NSLog("move longitude %f", moveAmountLongitude)
-        //NSLog("zoom %f", zoomLevel)
-        //NSLog("google map zoom %f", googleMapView.camera.zoom)
         
         var centerPixelX : Double = mapView.centerCoordinate.longitude
         var centerPixelY : Double = mapView.centerCoordinate.latitude
@@ -148,6 +142,24 @@ class ViewController: UIViewController, MKMapViewDelegate, GMSMapViewDelegate {
     
     func googleMapView(googleMapView: GMSMapView!, idleAtCameraPosition position: GMSCameraPosition!) {
         button.setTitle("It works!", forState: UIControlState.Normal)
+    }
+    
+    @IBAction func mapTypeSegmentPressed(sender: AnyObject) {
+        let segmentedControl = sender as UISegmentedControl
+        switch segmentedControl.selectedSegmentIndex {
+        case 0:
+            googleMapView.mapType = kGMSTypeNormal
+            mapView.mapType = MKMapType.Standard
+        case 1:
+            googleMapView.mapType = kGMSTypeSatellite
+            mapView.mapType = MKMapType.Satellite
+        case 2:
+            googleMapView.mapType = kGMSTypeHybrid
+            mapView.mapType = MKMapType.Hybrid
+        default:
+            googleMapView.mapType = googleMapView.mapType
+            mapView.mapType = MKMapType.Standard
+        }
     }
 }
 
